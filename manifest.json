@@ -1,0 +1,5 @@
+{
+  "version": "0.4.9.1",
+  "status": "validation-ready candidate; deployment gate required",
+  "synthetic_data_only": true
+}

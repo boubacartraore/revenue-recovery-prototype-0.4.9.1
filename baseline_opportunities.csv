@@ -1,0 +1,9 @@
+opportunity_id,title,opportunity_type,service_category,amount,expected_margin,unpaid_balance,customer_type,prior_jobs,historic_customer_value,responsiveness,estimated_staff_effort_minutes,required_skill,geographic_fit,scheduling_feasibility,age_days,days_since_contact,days_overdue,current_season,weather_event_type
+OPP01,HVAC replacement estimate,estimate,HVAC replacement,8400,0.38,0,existing,2,13500,medium,15,HVAC install,high,high,5,5,0,fall,cooling temperatures
+OPP02,Overdue plumbing invoice,invoice,completed plumbing work,4300,0.42,4300,existing,3,9700,medium,10,office,high,high,37,12,22,fall,none
+OPP03,Electrical panel lead,lead,electrical panel upgrade,5200,0.35,0,new,0,0,high,10,electrical,high,medium,1,1,0,fall,none
+OPP04,Roof replacement estimate,estimate,roof replacement,14800,0.29,0,new,0,0,low,30,roofing,medium,low,18,10,0,fall,recent windstorm
+OPP05,Overdue service-call invoice,invoice,service call,950,0.5,950,new,1,950,low,15,office,high,high,68,20,53,fall,none
+OPP06,Furnace replacement estimate,estimate,furnace replacement,7200,0.41,0,existing,4,18200,high,15,HVAC install,high,high,3,3,0,fall,cold snap expected
+OPP07,Drain-cleaning lead,lead,drain cleaning,650,0.55,0,new,0,0,high,5,plumbing,high,high,0,0,0,fall,none
+OPP08,Annual maintenance opportunity,repeat_service,annual maintenance,1200,0.48,0,existing,6,15400,high,10,service tech,high,high,14,14,0,fall,seasonal maintenance cycle

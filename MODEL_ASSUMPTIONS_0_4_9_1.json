@@ -1,0 +1,23 @@
+{
+  "version": "0.4.9.1-final",
+  "economic_value_scaling": {
+    "method": "fixed synthetic reference anchors",
+    "anchors_usd": {
+      "cash": 5000,
+      "profit": 5000,
+      "growth": 15000
+    },
+    "status": "experimental",
+    "reason": "avoid queue-composition-dependent normalization",
+    "future_replacement": "company historical distributions or empirically calibrated industry/company reference scales after sufficient data"
+  },
+  "persistence": {
+    "supabase_insert_returning": "minimal",
+    "reason": "reviewer roles have INSERT only and no SELECT permission"
+  },
+  "known_nonblockers": [
+    "Reference anchors are not claimed to be universal industry thresholds.",
+    "Early validation uses synthetic profiles and a convenience sample.",
+    "Real-data production integration, authentication, tenant isolation, causal impact estimation, and automated customer communications remain later-stage work."
+  ]
+}

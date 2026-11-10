@@ -1,0 +1,30 @@
+{
+  "version": "0.4.9.1-final",
+  "static_checks": {
+    "python_syntax_compiles": true,
+    "blind_stage_present": true,
+    "lock_before_reveal": true,
+    "randomized_order_stored": true,
+    "human_ranking_stored": true,
+    "model_ranking_stored": true,
+    "objective_specific_value": true,
+    "weighted_explanations": true,
+    "near_tie_confidence": true,
+    "priority_vs_feasibility": true,
+    "bounded_seasonality": true,
+    "insert_returning_minimal": true,
+    "no_service_role_in_app": true,
+    "rls_enabled": true,
+    "insert_only_grant": true
+  },
+  "passed": 15,
+  "total": 15,
+  "failed": [],
+  "manual_checks_required": [
+    "Create/apply Supabase validation schema in the actual project.",
+    "Run real RLS allow/deny tests against anon/authenticated roles.",
+    "Add actual Supabase URL and anon/publishable key to Streamlit Secrets.",
+    "Run one end-to-end test submission and verify one row appears with no client read access.",
+    "Review mobile and desktop UI before external outreach."
+  ]
+}

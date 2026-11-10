@@ -1,0 +1,7 @@
+business_id,label,trade,city,state,priority_1,priority_2,priority_3,growth_posture,cash_flow_pressure,workload,capacity_status
+BIZ_A_CASH,Cash-constrained plumbing business,Plumbing,Portland,ME,improve_cash_flow,prevent_stale,maximize_profitable_work,normal,high,normal,some_availability
+BIZ_B_GROWTH,Growth-focused HVAC business,HVAC,Portland,ME,grow_revenue,recover_unsold_estimates,maximize_profitable_work,aggressive,low,normal,plenty
+BIZ_C_CAPACITY,Capacity-constrained electrical business,Electrical,Portland,ME,maximize_profitable_work,fill_available_capacity,retain_valuable_customers,normal,moderate,busy,limited
+BIZ_D_RELATION,Relationship-focused multi-trade business,Multi-trade,Portland,ME,retain_valuable_customers,maximize_profitable_work,improve_cash_flow,normal,moderate,normal,some_availability
+BIZ_E_HVAC_SEASON,Seasonal HVAC business,HVAC,Portland,ME,grow_revenue,recover_unsold_estimates,fill_available_capacity,normal,low,normal,some_availability
+BIZ_F_ROOF_STORM,Post-storm roofing business,Roofing,Portland,ME,maximize_profitable_work,prevent_stale,grow_revenue,aggressive,moderate,busy,limited
