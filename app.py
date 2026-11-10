@@ -1,7 +1,7 @@
 
 import streamlit as st
 import pandas as pd
-import json, uuid
+import json, uuid, hashlib
 from datetime import datetime, timezone
 
 st.set_page_config(page_title="Revenue Recovery", page_icon="📈", layout="wide", initial_sidebar_state="expanded")
@@ -42,6 +42,8 @@ h1,h2,h3{letter-spacing:-.02em}
 .rr-context-label{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
 .rr-context-value{font-weight:750;margin-top:2px}
 div[data-testid="stButton"] button{border-radius:12px;font-weight:750;padding:.55rem 1rem}
+div[data-testid="stButton"] button[kind="primary"]{background:#2457d6 !important;border-color:#2457d6 !important;color:white !important}
+div[data-testid="stButton"] button[kind="primary"]:hover{background:#1d49b9 !important;border-color:#1d49b9 !important}
 div[data-testid="stSelectbox"] label,div[data-testid="stTextArea"] label{font-weight:650;color:#39445a}
 @media(max-width:760px){.block-container{padding:1rem .75rem 3rem}.rr-hero{padding:20px 18px;border-radius:16px}.rr-title{font-size:1.55rem}.rr-context-grid{grid-template-columns:1fr}}
 </style>
@@ -147,13 +149,45 @@ st.markdown("<div class='rr-hero'><div class='rr-eyebrow'>Research prototype · 
 
 with st.sidebar:
     st.markdown("### Reviewer setup")
-    selected=st.selectbox("Business profile",PROFILES["label"].tolist());p=PROFILES.loc[PROFILES["label"]==selected].iloc[0].to_dict()
-    role=st.selectbox("Your role",["Owner","General manager","Office/dispatch manager","Estimator/sales","Bookkeeping/accounting","Operations","Other"])
-    exp=st.selectbox("Industry experience",["<1 year","1–3 years","4–7 years","8+ years","Prefer not to say"])
+    profile_options=PROFILES["business_id"].tolist()
+    profile_labels={
+        row["business_id"]:str(row["label"]).replace(" business","")
+        for _,row in PROFILES.iterrows()
+    }
+    selected_id=st.selectbox(
+        "Business profile",
+        profile_options,
+        index=None,
+        placeholder="Choose the closest profile",
+        format_func=lambda x: profile_labels[x]
+    )
+    role=st.selectbox(
+        "Your role",
+        ["Owner","General manager","Office/dispatch manager","Estimator/sales","Bookkeeping/accounting","Operations","Other"],
+        index=None,
+        placeholder="Choose your role"
+    )
+    exp=st.selectbox(
+        "Industry experience",
+        ["<1 year","1–3 years","4–7 years","8+ years","Prefer not to say"],
+        index=None,
+        placeholder="Choose experience level"
+    )
+
+if selected_id is None:
+    st.markdown("<div class='rr-section'><div class='rr-section-title'>Choose a business profile to begin</div><div class='rr-section-sub'>Select the synthetic profile closest to your experience in the left sidebar. The model remains hidden until after you rank the opportunities.</div></div>",unsafe_allow_html=True)
+    st.stop()
+
+p=PROFILES.loc[PROFILES["business_id"]==selected_id].iloc[0].to_dict()
+
+with st.sidebar:
     st.markdown("---");st.markdown("#### Current context")
     st.markdown(f"<div class='rr-context-grid'><div class='rr-context-item'><div class='rr-context-label'>Trade</div><div class='rr-context-value'>{p['trade']}</div></div><div class='rr-context-item'><div class='rr-context-label'>Capacity</div><div class='rr-context-value'>{pretty(p['capacity_status'])}</div></div><div class='rr-context-item'><div class='rr-context-label'>Cash pressure</div><div class='rr-context-value'>{pretty(p['cash_flow_pressure'])}</div></div><div class='rr-context-item'><div class='rr-context-label'>Workload</div><div class='rr-context-value'>{pretty(p['workload'])}</div></div></div>",unsafe_allow_html=True)
 
-q,eligible=make_queue(p);seed=abs(hash((st.session_state.review_id,p["business_id"])))%(2**32);shuffled=eligible.sample(frac=1,random_state=seed).reset_index(drop=True)
+q,eligible=make_queue(p)
+seed_text=f"{st.session_state.review_id}|{p['business_id']}"
+seed=int(hashlib.sha256(seed_text.encode("utf-8")).hexdigest()[:8],16)
+shuffled=eligible.sample(frac=1,random_state=seed).reset_index(drop=True)
 locked=st.session_state.get(f"locked_{p['business_id']}",False)
 st.markdown(f"<div class='rr-stepbar'><div class='rr-step {'done' if locked else 'active'}'>1 · Rank independently</div><div class='rr-step {'active' if locked else ''}'>2 · Reveal the model</div><div class='rr-step'>3 · Explain disagreement</div></div>",unsafe_allow_html=True)
 
@@ -165,12 +199,37 @@ for i in range(0,len(shuffled),2):
             with c:st.markdown(card(shuffled.iloc[i+j]),unsafe_allow_html=True)
 
 st.markdown("#### Your ranking")
-labels=shuffled["title"].tolist();chosen=[];remaining=labels[:]
+labels=shuffled["title"].tolist();chosen=[]
 for i in range(len(labels)):
-    pick=st.selectbox(f"#{i+1}",remaining,key=f"{p['business_id']}_rank_{i}",disabled=locked);chosen.append(pick);remaining=[x for x in remaining if x!=pick]
-blind=st.text_area("What mattered most in your ranking? (optional)",key=f"{p['business_id']}_blind",placeholder="Cash flow, urgency, customer relationship, crew availability...",disabled=locked)
-if not locked and st.button("Lock my ranking and reveal the model",type="primary",use_container_width=True):
-    st.session_state[f"locked_{p['business_id']}"]=True;st.session_state[f"human_{p['business_id']}"]=chosen;st.session_state[f"blind_saved_{p['business_id']}"]=blind;st.rerun()
+    pick=st.selectbox(
+        f"#{i+1}",
+        labels,
+        index=None,
+        placeholder=f"Choose opportunity for rank #{i+1}",
+        key=f"{p['business_id']}_rank_{i}",
+        disabled=locked
+    )
+    chosen.append(pick)
+
+blind=st.text_area(
+    "What mattered most in your ranking? (optional)",
+    key=f"{p['business_id']}_blind",
+    placeholder="Cash flow, urgency, customer relationship, crew availability...",
+    disabled=locked
+)
+
+ranking_complete=all(x is not None for x in chosen)
+ranking_unique=len(set(x for x in chosen if x is not None))==len(labels) if ranking_complete else False
+
+if not locked:
+    if ranking_complete and not ranking_unique:
+        st.warning("Each opportunity must appear exactly once in your ranking.")
+    lock_disabled=not (ranking_complete and ranking_unique)
+    if st.button("Lock my ranking and reveal the model",type="primary",use_container_width=True,disabled=lock_disabled):
+        st.session_state[f"locked_{p['business_id']}"]=True
+        st.session_state[f"human_{p['business_id']}"]=chosen
+        st.session_state[f"blind_saved_{p['business_id']}"]=blind
+        st.rerun()
 
 if locked:
     st.markdown("<div class='rr-section'><div class='rr-section-title'>Step 2 — Revenue Recovery's Revenue Queue</div><div class='rr-section-sub'>Compare your independent judgment with the model. Commercial priority and immediate action feasibility are separated.</div></div>",unsafe_allow_html=True)
@@ -186,11 +245,40 @@ if locked:
     human=st.session_state[f"human_{p['business_id']}"];model=q["title"].tolist();exact=sum(1 for i,x in enumerate(human) if model[i]==x)
     c1,c2=st.columns(2);c1.metric("Position agreement",f"{exact}/{len(model)}");c2.metric("Top confidence",top["confidence"])
     st.markdown("<div class='rr-section'><div class='rr-section-title'>Step 3 — Where does the model differ from you?</div><div class='rr-section-sub'>Disagreement is useful evidence. It does not automatically mean either side is wrong.</div></div>",unsafe_allow_html=True)
-    agreement=st.selectbox("How well does the model reflect your judgment?",["Very well","Mostly well","Mixed","Mostly poorly","Very poorly"])
-    override=st.selectbox("Would you change the model's top recommendation?",["No","Yes"])
-    reason=st.selectbox("Main reason",["No override reason","Cash flow","Customer relationship","Crew availability","Higher margin","Seasonal consideration","Strategic customer","Missing information","Owner judgment","Other"])
-    post=st.text_area("What is the model missing or getting wrong? (optional)")
-    if st.button("Submit review",type="primary",use_container_width=True):
+    agreement=st.selectbox(
+        "How well does the model reflect your judgment?",
+        ["Very well","Mostly well","Mixed","Mostly poorly","Very poorly"],
+        index=None,
+        placeholder="Choose one"
+    )
+    override=st.selectbox(
+        "Would you change the model's top recommendation?",
+        ["No","Yes"],
+        index=None,
+        placeholder="Choose yes or no"
+    )
+
+    reason="No override reason"
+    if override=="Yes":
+        reason=st.selectbox(
+            "Main reason",
+            ["Cash flow","Customer relationship","Crew availability","Higher margin","Seasonal consideration","Strategic customer","Missing information","Owner judgment","Other"],
+            index=None,
+            placeholder="Choose the main reason"
+        )
+
+    post=st.text_area(
+        "What is the model missing or getting wrong? (optional)",
+        placeholder="Add anything the model should understand that is not represented above."
+    )
+
+    metadata_complete=(role is not None and exp is not None)
+    review_complete=(agreement is not None and override is not None and (override!="Yes" or reason is not None))
+    if not metadata_complete:
+        st.info("Choose your role and experience level in the sidebar before submitting.")
+    submit_disabled=not (metadata_complete and review_complete)
+
+    if st.button("Submit review",type="primary",use_container_width=True,disabled=submit_disabled):
         payload={"review_id":st.session_state.review_id,"submitted_at":datetime.now(timezone.utc).isoformat(),"prototype_version":"0.4.9.1","business_profile_id":p["business_id"],"reviewer_role":role,"experience_band":exp,"randomized_order":shuffled["opportunity_id"].tolist(),"human_ranking_titles":human,"human_ranking_ids":[eligible.loc[eligible["title"]==t,"opportunity_id"].iloc[0] for t in human],"model_ranking_ids":q["opportunity_id"].tolist(),"model_confidence_top":top["confidence"],"agreement_response":agreement,"override_top":override,"override_reason":reason,"blind_comment":st.session_state[f"blind_saved_{p['business_id']}"],"post_model_comment":post,"synthetic_data_only":True}
         st.success(persist(payload));st.caption("Agreement is evidence, not proof of correctness.")
 
